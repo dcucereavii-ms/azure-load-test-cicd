@@ -1,0 +1,55 @@
+# Azure Load Testing config — references api-load.jmx
+# Docs: https://learn.microsoft.com/azure/load-testing/reference-test-config-yaml
+version: v0.1
+testId: api-load
+testType: JMX
+displayName: ContosoGov API load (JWT)
+description: JWT auth + permits CRUD against ContosoGov.Web
+testPlan: api-load.jmx
+engineInstances: 2
+
+# Re-uses the SAME jmx as local JMeter. Local: -Jhost=... ; ALT: env: below.
+configurationFiles:
+  - users.csv
+
+# splitAllCSVs partitions users.csv across the 2 engines so no user is reused
+# concurrently from two engines at once (still recycled within an engine).
+splitAllCSVs: true
+
+env:
+  - name: host
+    value: cgov-app-fovgoutjv2ah6.purplestone-67b90e2b.eastus2.azurecontainerapps.io
+  - name: protocol
+    value: https
+  - name: threads
+    value: "50"         # per engine → 100 VU total with engineInstances=2 (stays under saturation)
+  - name: rampup
+    value: "60"
+  - name: duration
+    value: "300"
+  - name: loops
+    value: "-1"
+  - name: users_csv
+    value: users.csv
+
+# Pass / fail gate evaluated server-side after the run.
+# Measured baseline (good revision) under 100 VU: avg ~700 ms, p95 ~2700 ms, errors 0%.
+# Bottleneck (bad revision) adds +500 ms WAITFOR to SELECT Permits → expect avg ~1100-1300 ms,
+# p95 ~3500-4500 ms. Per-sampler gates aren't supported by the CLI yaml parser, so we
+# tighten the global thresholds to sit between the two states.
+failureCriteria:
+  - avg(response_time_ms) > 1000
+  - p95(response_time_ms) > 3200
+  - percentage(error) > 2
+
+# Auto-stop a runaway test.
+autoStop:
+  errorPercentage: 90
+  timeWindow: 60
+
+# Server-side metrics from the App Service / Container App being tested.
+# Replace resourceId once you wire it via `az load test app-component add` or in CI.
+# appComponents:
+#   - resourceId: /subscriptions/<sub>/resourceGroups/rg-cgov-workshop/providers/Microsoft.App/containerApps/cgov-app-fovgoutjv2ah6
+#     resourceName: cgov-app-fovgoutjv2ah6
+#     resourceType: Microsoft.App/containerApps
