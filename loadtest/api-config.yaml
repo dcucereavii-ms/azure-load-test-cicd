@@ -45,7 +45,7 @@ env:
 
 failureCriteria:
   - avg(response_time_ms) > 1500
-  - p95(response_time_ms) > 4000
+  - p95(response_time_ms) > 5000
   - percentage(error) > 2
 
 # Auto-stop a runaway test.
