@@ -22,7 +22,7 @@ env:
   - name: protocol
     value: https
   - name: threads
-    value: "25"         # per engine → 50 VU total with engineInstances=2 (reduced from 50 to ease DB load)
+    value: "10"         # per engine → 50 VU total with engineInstances=2 (reduced from 50 to ease DB load)
   - name: rampup
     value: "60"
   - name: duration
