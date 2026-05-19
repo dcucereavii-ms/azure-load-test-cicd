@@ -22,7 +22,7 @@ env:
   - name: protocol
     value: https
   - name: threads
-    value: "50"         # per engine → 100 VU total with engineInstances=2 (stays under saturation)
+    value: "25"         # per engine → 50 VU total with engineInstances=2 (reduced from 50 to ease DB load)
   - name: rampup
     value: "60"
   - name: duration
@@ -38,8 +38,8 @@ env:
 # p95 ~3500-4500 ms. Per-sampler gates aren't supported by the CLI yaml parser, so we
 # tighten the global thresholds to sit between the two states.
 failureCriteria:
-  - avg(response_time_ms) > 1000
-  - p95(response_time_ms) > 3200
+  - avg(response_time_ms) > 800
+  - p95(response_time_ms) > 2500
   - percentage(error) > 2
 
 # Auto-stop a runaway test.
